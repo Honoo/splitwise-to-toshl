@@ -18,12 +18,24 @@ func main() {
 	config := getConfig()
 
 	// Get user's details
-	self := createRequest("GET", "https://api.toshl.com/me", nil, config)
+	selfRes := createRequest("GET", "https://api.toshl.com/me", nil, config)
+	var self map[string]interface{}
+	err := json.Unmarshal(selfRes, &self)
+	if err != nil {
+		fmt.Println(err)
+	}
 	id := self["id"]
 	fmt.Println(id)
 
 	// Get user's categories
-	_ = createRequest("GET", "https://api.toshl.com/categories", nil, config)
+	categoriesRes := createRequest("GET", "https://api.toshl.com/categories", nil, config)
+	var categories []map[string]interface{}
+	err = json.Unmarshal(categoriesRes, &categories)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(categories[0]["id"])
 
 	//requestBody := strings.NewReader(`
 	//	{
@@ -43,7 +55,7 @@ func main() {
 	//resp, err := hc.Do(req)
 }
 
-func createRequest(method string, url string, requestBody io.Reader, config Configuration) map[string]interface{} {
+func createRequest(method string, url string, requestBody io.Reader, config Configuration) []byte {
 	req, err := http.NewRequest(method, url, requestBody)
 
 	if err != nil {
@@ -62,10 +74,7 @@ func createRequest(method string, url string, requestBody io.Reader, config Conf
 	body, err := ioutil.ReadAll(resp.Body)
 	fmt.Println(string(body))
 
-	var bodyMap map[string]interface{}
-	err = json.Unmarshal(body, &bodyMap)
-
-	return bodyMap
+	return body
 }
 
 func getConfig() Configuration {
