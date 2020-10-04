@@ -1,30 +1,61 @@
 package main
 
 import (
+	"fmt"
+	"io/ioutil"
 	"net/http"
-	"strings"
+	"encoding/json"
+	"os"
+	//"strings"
 )
 
-func main() {
-	requestBody := strings.NewReader(`
-		{
-			"amount": "100",
-			"currency": {
-				"code": "USD"
-			},
-			"date": "2020-10-01",
-			"account": "123",
-			"category": "123"
-		}
-	`)
+type Configuration struct {
+	ToshlToken string
+}
 
-	req, err := http.NewRequest("POST", "https://api.toshl.com/entries", requestBody)
+func main() {
+	file, _ := os.Open("config.json")
+	defer file.Close()
+	decoder := json.NewDecoder(file)
+	configuration := Configuration{}
+	err := decoder.Decode(&configuration)
+	if err != nil {
+		fmt.Println("error getting config:", err)
+	}
+
+	// Get user details
+	req, err := http.NewRequest("GET", "https://api.toshl.com/me", nil)
 
 	if err != nil {
-		req.Header.Add("Content-Type", "application/json")
-		req.Header.Add("Authorization", "Bearer 123")
+		fmt.Println(err)
 	}
+
+	req.Header.Add("Authorization", "Bearer " + configuration.ToshlToken)
 
 	hc := http.Client{}
 	resp, err := hc.Do(req)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	fmt.Println(string(body))
+
+	//requestBody := strings.NewReader(`
+	//	{
+	//		"amount": "100",
+	//		"currency": {
+	//			"code": "USD"
+	//		},
+	//		"date": "2020-10-01",
+	//		"account": "123",
+	//		"category": "123"
+	//	}
+	//`)
+	//
+	//req, err := http.NewRequest("POST", "https://api.toshl.com/entries", requestBody)
+	//
+	//hc := http.Client{}
+	//resp, err := hc.Do(req)
 }
