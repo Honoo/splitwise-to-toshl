@@ -2,19 +2,17 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
-	"encoding/json"
 	"os"
-	//"strings"
-
-	//"strings"
 )
 
 type Configuration struct {
 	ToshlToken string
+	SplitwiseToken string
 }
 
 type ToshlEntry struct {
@@ -31,28 +29,29 @@ type Currency struct {
 
 func main() {
 	config := getConfig()
+	
+	// Get Splitwise expenses
+	datedBefore := "2020-11-01"
+	datedAfter := "2020-10-01"
+	splitwiseUrl := "https://secure.splitwise.com/api/v3.0/get_expenses?dated_before=" + datedBefore + "&dated_after=" + datedAfter
+	userRes := createdSplitwiseRequest("GET", splitwiseUrl, nil, config)
+	var user map[string]interface{}
+	err := json.Unmarshal(userRes, &user)
+	if err != nil {
+		fmt.Println(err)
+	}
 
-	//// Get user's details
-	//selfRes := createRequest("GET", "https://api.toshl.com/me", nil, config)
-	//var self map[string]interface{}
-	//err := json.Unmarshal(selfRes, &self)
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	//userId := self["id"]
-	//fmt.Println(userId)
-
-	// Get user's accounts
-	accountsRes := createRequest("GET", "https://api.toshl.com/accounts", nil, config)
+	// Get Toshl user's accounts
+	accountsRes := createToshlRequest("GET", "https://api.toshl.com/accounts", nil, config)
 	var accounts []map[string]interface{}
-	err := json.Unmarshal(accountsRes, &accounts)
+	err = json.Unmarshal(accountsRes, &accounts)
 	if err != nil {
 		fmt.Println(err)
 	}
 	fmt.Println(accounts[0]["id"])
 
-	// Get user's categories
-	categoriesRes := createRequest("GET", "https://api.toshl.com/categories", nil, config)
+	// Get Toshl user's categories
+	categoriesRes := createToshlRequest("GET", "https://api.toshl.com/categories", nil, config)
 	var categories []map[string]interface{}
 	err = json.Unmarshal(categoriesRes, &categories)
 	if err != nil {
@@ -62,7 +61,7 @@ func main() {
 
 	// Create entry in Toshl
 	requestBody := createToshlEntryDetails("2020-10-01", 100, categories[1]["id"].(string), accounts[0]["id"].(string))
-	_ = createRequest("POST", "https://api.toshl.com/entries", bytes.NewBuffer(requestBody), config)
+	_ = createToshlRequest("POST", "https://api.toshl.com/entries", bytes.NewBuffer(requestBody), config)
 }
 
 func createToshlEntryDetails(date string, amount int, category string, account string) []byte {
@@ -87,14 +86,22 @@ func createToshlEntryDetails(date string, amount int, category string, account s
 	return toshlEntryBody
 }
 
-func createRequest(method string, url string, requestBody io.Reader, config Configuration) []byte {
+func createToshlRequest(method string, url string, requestBody io.Reader, config Configuration) []byte {
+	return createRequest(method, url, requestBody, config.ToshlToken)
+}
+
+func createdSplitwiseRequest(method string, url string, requestBody io.Reader, config Configuration) []byte {
+	return createRequest(method, url, requestBody, config.SplitwiseToken)
+}
+
+func createRequest(method string, url string, requestBody io.Reader, apiKey string) []byte {
 	req, err := http.NewRequest(method, url, requestBody)
 
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	req = addHeaders(req, method, config)
+	req = addHeaders(req, method, apiKey)
 
 	hc := http.Client{}
 	resp, err := hc.Do(req)
@@ -126,8 +133,8 @@ func getConfig() Configuration {
 	return configuration
 }
 
-func addHeaders(req *http.Request, method string, config Configuration) *http.Request {
-	req.Header.Add("Authorization", "Bearer " + config.ToshlToken)
+func addHeaders(req *http.Request, method string, token string) *http.Request {
+	req.Header.Add("Authorization", "Bearer " + token)
 
 	if method == "POST" {
 		req.Header.Add("Content-Type", "application/json")
