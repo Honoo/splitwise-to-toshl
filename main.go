@@ -10,31 +10,34 @@ import (
 	"os"
 )
 
+// Configuration provides the application configuration data
 type Configuration struct {
-	ToshlToken string
+	ToshlToken     string
 	SplitwiseToken string
 }
 
+// ToshlEntry is the format that the Toshl API requires for an entry.
 type ToshlEntry struct {
-	Amount   int `json:"amount"`
-	Date     string `json:"date"`
-	Account  string `json:"account"`
-	Category string `json:"category"`
+	Amount   int      `json:"amount"`
+	Date     string   `json:"date"`
+	Account  string   `json:"account"`
+	Category string   `json:"category"`
 	Currency Currency `json:"currency"`
 }
 
+// Currency is part of ToshlEntry
 type Currency struct {
 	Code string `json:"code"`
 }
 
 func main() {
 	config := getConfig()
-	
+
 	// Get Splitwise expenses
 	datedBefore := "2020-11-01"
 	datedAfter := "2020-10-01"
-	splitwiseUrl := "https://secure.splitwise.com/api/v3.0/get_expenses?dated_before=" + datedBefore + "&dated_after=" + datedAfter
-	userRes := createdSplitwiseRequest("GET", splitwiseUrl, nil, config)
+	splitwiseURL := "https://secure.splitwise.com/api/v3.0/get_expenses?dated_before=" + datedBefore + "&dated_after=" + datedAfter
+	userRes := createdSplitwiseRequest("GET", splitwiseURL, nil, config)
 	var user map[string]interface{}
 	err := json.Unmarshal(userRes, &user)
 	if err != nil {
@@ -70,8 +73,8 @@ func createToshlEntryDetails(date string, amount int, category string, account s
 		Date:     date,
 		Account:  account,
 		Category: category,
-		Currency: Currency {
-    		Code: "USD",
+		Currency: Currency{
+			Code: "USD",
 		},
 	}
 
@@ -134,7 +137,7 @@ func getConfig() Configuration {
 }
 
 func addHeaders(req *http.Request, method string, token string) *http.Request {
-	req.Header.Add("Authorization", "Bearer " + token)
+	req.Header.Add("Authorization", "Bearer "+token)
 
 	if method == "POST" {
 		req.Header.Add("Content-Type", "application/json")
