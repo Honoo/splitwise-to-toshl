@@ -31,40 +31,77 @@ type Currency struct {
 }
 
 func main() {
+	fmt.Println("Splitwise to Toshl expense transfer tool")
+	fmt.Println("")
+	fmt.Print("Loading config... ")
 	config := getConfig()
+	if config == nil {
+		return
+	}
+	fmt.Println("done")
 
-	// Get Splitwise expenses
-	datedBefore := "2020-11-01"
-	datedAfter := "2020-10-01"
-	splitwiseURL := "https://secure.splitwise.com/api/v3.0/get_expenses?dated_before=" + datedBefore + "&dated_after=" + datedAfter
-	userRes := createdSplitwiseRequest("GET", splitwiseURL, nil, config)
-	var user map[string]interface{}
-	err := json.Unmarshal(userRes, &user)
-	if err != nil {
-		fmt.Println(err)
+	var authSuccess bool = true
+	// Get Splitwise user
+	fmt.Print("Checking splitwise token... ")
+	// datedBefore := "2020-11-01"
+	// datedAfter := "2020-10-01"
+	// splitwiseURL := "https://secure.splitwise.com/api/v3.0/get_expenses?dated_before=" + datedBefore + "&dated_after=" + datedAfter
+	splitwiseURL := "https://secure.splitwise.com/api/v3.0/get_current_user"
+	swRes := createdSplitwiseRequest("GET", splitwiseURL, nil, config)
+	var swUser map[string]interface{}
+	err := json.Unmarshal(swRes, &swUser)
+	fmt.Println(swUser["user"]["email"])
+
+	swError, swHasError := swUser["error"]
+	if err != nil || swHasError {
+		fmt.Println("error")
+		fmt.Println(swError)
+		authSuccess = false
+	} else {
+		fmt.Print(swUser["error"])
+		fmt.Println("done")
 	}
 
-	// Get Toshl user's accounts
-	accountsRes := createToshlRequest("GET", "https://api.toshl.com/accounts", nil, config)
-	var accounts []map[string]interface{}
-	err = json.Unmarshal(accountsRes, &accounts)
-	if err != nil {
-		fmt.Println(err)
+	// Get Toshl user
+	fmt.Print("Checking toshl token... ")
+	tRes := createToshlRequest("GET", "https://api.toshl.com/me", nil, config)
+	var tUser map[string]interface{}
+	err = json.Unmarshal(tRes, &tUser)
+	fmt.Println(tUser)
+	fmt.Println(err)
+	tError, tHasError := tUser["error_id"]
+	if err != nil || tHasError {
+		fmt.Println("error")
+		fmt.Println(tError)
+		authSuccess = false
+	} else {
+		fmt.Println("done")
 	}
-	fmt.Println(accounts[0]["id"])
 
-	// Get Toshl user's categories
-	categoriesRes := createToshlRequest("GET", "https://api.toshl.com/categories", nil, config)
-	var categories []map[string]interface{}
-	err = json.Unmarshal(categoriesRes, &categories)
-	if err != nil {
-		fmt.Println(err)
+	if !authSuccess {
+		fmt.Println("There are errors with one or both of your authorisation tokens. Please check to make sure the tokens are correct and run this script again.")
+		return
 	}
-	fmt.Println(categories[1]["id"])
 
-	// Create entry in Toshl
-	requestBody := createToshlEntryDetails("2020-10-01", 100, categories[1]["id"].(string), accounts[0]["id"].(string))
-	_ = createToshlRequest("POST", "https://api.toshl.com/entries", bytes.NewBuffer(requestBody), config)
+	fmt.Println("Successfully authenticated with both services.")
+
+	fmt.Println("What would you like to do now?")
+	fmt.Println("1. Load splitwise users")
+
+	// fmt.Println(accounts[0]["id"])
+
+	// // Get Toshl user's categories
+	// categoriesRes := createToshlRequest("GET", "https://api.toshl.com/categories", nil, config)
+	// var categories []map[string]interface{}
+	// err = json.Unmarshal(categoriesRes, &categories)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// fmt.Println(categories[1]["id"])
+
+	// // Create entry in Toshl
+	// requestBody := createToshlEntryDetails("2020-10-01", 100, categories[1]["id"].(string), accounts[0]["id"].(string))
+	// _ = createToshlRequest("POST", "https://api.toshl.com/entries", bytes.NewBuffer(requestBody), config)
 }
 
 func createToshlEntryDetails(date string, amount int, category string, account string) []byte {
@@ -89,11 +126,11 @@ func createToshlEntryDetails(date string, amount int, category string, account s
 	return toshlEntryBody
 }
 
-func createToshlRequest(method string, url string, requestBody io.Reader, config Configuration) []byte {
+func createToshlRequest(method string, url string, requestBody io.Reader, config *Configuration) []byte {
 	return createRequest(method, url, requestBody, config.ToshlToken)
 }
 
-func createdSplitwiseRequest(method string, url string, requestBody io.Reader, config Configuration) []byte {
+func createdSplitwiseRequest(method string, url string, requestBody io.Reader, config *Configuration) []byte {
 	return createRequest(method, url, requestBody, config.SplitwiseToken)
 }
 
@@ -118,22 +155,29 @@ func createRequest(method string, url string, requestBody io.Reader, apiKey stri
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(string(body))
+	// fmt.Println(string(body))
 
 	return body
 }
 
-func getConfig() Configuration {
+// Get the configuration
+func getConfig() *Configuration {
+	if _, err := os.Stat("config.json"); os.IsNotExist(err) {
+		// config does not exist
+		fmt.Println("error:\nConfig file does not exist.\nPlease create a config.json file using config.example.json as an example.")
+		return nil
+	}
 	file, _ := os.Open("config.json")
 	defer file.Close()
 	decoder := json.NewDecoder(file)
 	configuration := Configuration{}
 	err := decoder.Decode(&configuration)
 	if err != nil {
-		fmt.Println("error getting config:", err)
+		fmt.Println("error: Cannot decode config\n", err)
+		return nil
 	}
 
-	return configuration
+	return &configuration
 }
 
 func addHeaders(req *http.Request, method string, token string) *http.Request {
