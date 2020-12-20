@@ -6,12 +6,15 @@ from os import system, name
 
 # print(auth_dict)
 pp = pprint.PrettyPrinter(indent=2)
+
+
 def clear():
   if name == 'nt':
     _ = system('cls')
   # for mac and linux(here, os.name is 'posix')
   else:
     _ = system('clear')
+
 
 clear()
 print("Splitwise to Toshl expense transfer tool\n")
@@ -24,6 +27,38 @@ auth_dict = dict(config.items('API_KEYS'))
 print("done\n")
 splitwise_headers = {"content-type":"application/json", "Authorization": "Bearer " + auth_dict['splitwise_api_key']}
 toshl_headers = {"content-type":"application/json", "Authorization": "Bearer " + auth_dict['toshl_api_key']}
+
+
+def get_friend_expenses(friend_id, count, page):
+  r = requests.get(f'https://secure.splitwise.com/api/v3.0/get_expenses?friend_id={friend_id}&limit={count}&offset={page * count}', headers=splitwise_headers)
+  involved_expenses_arr = []
+  expenses_arr = json.loads(r.text)['expenses']
+  for e in expenses_arr:
+    expense = {
+      "category": e['category']['name'],
+      "description": e['description'],
+      "currency" : e['currency_code'],
+      "total_amount" : float(e['cost']),
+      "date" : e['date'].split('T')[0] ,
+      "share_amount" : 0
+    }
+    expense_users = e['users']
+    for eu in expense_users:
+      if eu['user_id'] == user_accounts['splitwise']['id']:
+        expense['share_amount'] = float(eu['owed_share'])
+        break
+
+    if expense['share_amount'] > 0:
+      involved_expenses_arr.append(expense)
+      # pp.pprint(expense)
+  return involved_expenses_arr
+
+def expense_short_string(expense_object):
+    return f"{e['date']} {e['share_amount']} {e['currency']}\t[{e['category']}] - {e['description']}"
+
+def expense_long_string(expense_object):
+    return f"{e['date']}\n{e['share_amount']} {e['currency']} (total: {e['total_amount']} {e['currency']})\n[{e['category']}]\n{e['description']}"
+
 
 auth_passed = True
 user_accounts = {}
@@ -72,6 +107,10 @@ while (True):
   print("0. Quit")
   i = input()
   if (i == '1'):
+    clear()
+    print(f"Friend Transfer ") 
+    print(f"==========================================") 
+    print("")
     print("Loading friends list:")
     r = requests.get('https://secure.splitwise.com/api/v3.0/get_friends', headers=splitwise_headers)
     friends_arr = json.loads(r.text)['friends']
@@ -89,43 +128,93 @@ while (True):
     while(True):
       i = input()
       if (int(i) < 0 or int(i) >= len(friends_with_balances)):
-        print('Invalid selection!')
+        print('Invalid input!')
+        input("Press Enter to try again")
       else:
         selected_friend = friends_with_balances[int(i)]
         break
 
-    full_name = ' '.join(filter(None, (selected_friend['first_name'], selected_friend['last_name'])))
-    print("Loading 20 expenses for " + full_name)
+    
+    page = 1
+    while (True):
+      clear()
+      full_name = ' '.join(filter(None, (selected_friend['first_name'], selected_friend['last_name'])))
+      print(f"Friend Transfer > {full_name} > Page {page}") 
+      print(f"==========================================") 
+      print("")
+      print("Loading expenses for " + full_name + "\n")
 
-    r = requests.get(f'https://secure.splitwise.com/api/v3.0/get_expenses?friend_id={selected_friend["id"]}&limit=5', headers=splitwise_headers)
-    involved_expenses_arr = []
-    expenses_arr = json.loads(r.text)['expenses']
-    for e in expenses_arr:
-      expense = {
-        "category": e['category']['name'],
-        "description": e['description'],
-        "currency" : e['currency_code'],
-        "total_amount" : float(e['cost']),
-        "date" : e['date'],
-        "share_amount" : 0
-      }
-      expense_users = e['users']
-      for eu in expense_users:
-        if eu['user_id'] == user_accounts['splitwise']['id']:
-          expense['share_amount'] = float(eu['owed_share'])
-          break
+      expenses = get_friend_expenses(selected_friend["id"], 10, page - 1)
 
-      if expense['share_amount'] > 0:
-        involved_expenses_arr.append(expense)
-        # pp.pprint(expense)
+      # Give users some UI to decide what expenses they want.
+      if len(expenses) == 0:
+        print("There were no expenses here, you can try loading the next page")
+      else:
+        print("Here is what we found:")
+        for e in expenses:
+          print("   " + expense_short_string(e))
 
-    for e in involved_expenses_arr:
-      pp.pprint(e)
+      print("")
+      print("Choose an option")
+      print("1. Start processing here (you can skip individual expenses)")
+      print("2. Load next page")
+      print("0. Back to main menu")
+
+      i = input()
+      if (i == '1'):
+        expense_ind = 1
+        for e in expenses:
+          clear()
+          print(f"Friend Transfer > {full_name} > Page {page} > Item {expense_ind} of {len(expenses)}") 
+          print(f"==========================================") 
+          print("")
+          print(expense_long_string(e))
+          print("")
+          print("Checking for similar expenses on Toshl")
+          # Check toshl for similar expenses
+          print("   No similar expenses found")
+          
+          print("")
+          # Give options to add, or skip
+          print("Choose an option")
+          print("1. Add expense (you need to provide the category and tags)")
+          print("2. Skip expense")
+          print("0. Finish this page and go back")
+
+          i = input()
+          if (i == '1'):
+            # Get toshl categories
+            # Get toshl tags
+            expense_ind += 1
+            continue
+          elif (i == '2'):
+            expense_ind += 1
+            continue
+          elif (i == '0'):
+            break
+          else:
+            print('Invalid input!')
+            input("Press Enter to try again")
+
+        
+        page += 1
+        continue
+      elif (i == '2'):
+        page += 1
+        continue
+      elif (i == '0'):
+        break
+      else:
+        print('Invalid input!')
+        input("Press Enter to try again")
+
+    
+
       
   elif (i == '0'):
     exit()
   else:
-    print("Invalid input, try again.")
+    print("Invalid input!")
 
   input("Press Enter to continue...")
   
