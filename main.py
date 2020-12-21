@@ -2,11 +2,22 @@ import configparser
 import requests
 import pprint
 import json
+from datetime import datetime, timedelta
 from os import system, name
 
 # print(auth_dict)
 pp = pprint.PrettyPrinter(indent=2)
 
+# Take a date string and output the previous day and next day as strings
+# e.g. input: "2020-05-20"
+#      output: ["2020-05-19", "2020-05-21"]
+def get_date_buffer(date_str):
+  dt_obj = datetime.strptime(date_str, '%Y-%m-%d')
+  upper_date = dt_obj + timedelta(days=1)
+  upper = upper_date.strftime("%Y-%m-%d")
+  lower_date = dt_obj - timedelta(days=1)
+  lower = lower_date.strftime("%Y-%m-%d")
+  return [lower, upper]
 
 def clear():
   if name == 'nt':
@@ -14,6 +25,42 @@ def clear():
   # for mac and linux(here, os.name is 'posix')
   else:
     _ = system('clear')
+
+
+toshl_category_tag = {} # Contains categories keyed by id, and tags
+toshl_categories = [] # Contains categories sorted by usage
+toshl_tags = [] # Contains tags sorted by usage
+
+def get_toshl_cats_and_tags():
+  r = requests.get("https://api.toshl.com/categories", headers=toshl_headers)
+  cat_response = json.loads(r.text)
+  # Sort by number of entries per category
+  cat_response = sorted(cat_response, key=lambda x:-x['counts']['entries'] )
+  
+  for c in cat_response:
+    if not c['deleted'] and c['type'] == 'expense':
+      cat = {
+        'id': c['id'],
+        'name': c['name'],
+        'tags': []
+      }
+      toshl_categories.append(cat)
+      toshl_category_tag[c['id']] = cat
+
+  r = requests.get("https://api.toshl.com/tags", headers=toshl_headers)
+  tag_response = json.loads(r.text)
+  # Sort by number of entries per category
+  tag_response = sorted(tag_response, key=lambda x:-x['counts']['entries'] )
+  for t in tag_response:
+    if not t['deleted'] and t['type'] == 'expense':
+      tag = {
+        'id': t['id'],
+        'name': t['name'],
+        'category': t['category']
+      }
+      toshl_tags.append(tag)
+      if tag['category'] in toshl_category_tag:
+        toshl_category_tag[tag['category']]['tags'].append(tag)
 
 
 clear()
@@ -27,7 +74,6 @@ auth_dict = dict(config.items('API_KEYS'))
 print("done\n")
 splitwise_headers = {"content-type":"application/json", "Authorization": "Bearer " + auth_dict['splitwise_api_key']}
 toshl_headers = {"content-type":"application/json", "Authorization": "Bearer " + auth_dict['toshl_api_key']}
-
 
 def get_friend_expenses(friend_id, count, page):
   r = requests.get(f'https://secure.splitwise.com/api/v3.0/get_expenses?friend_id={friend_id}&limit={count}&offset={page * count}', headers=splitwise_headers)
@@ -64,7 +110,6 @@ auth_passed = True
 user_accounts = {}
 print("Checking splitwise token... ")
 r = requests.get('https://secure.splitwise.com/api/v3.0/get_current_user', headers=splitwise_headers)
-
 if (r.status_code == 200):
   print("success")
   user_obj = json.loads(r.text)
@@ -76,18 +121,22 @@ else:
   print(r.text)
   auth_passed = False
 
-# print("Checking toshl token... ")
-# r = requests.get("https://api.toshl.com/me", headers=toshl_headers)
-# if (r.status_code == 200):
-#   print("success")
-#   user_obj = json.loads(r.text)
-#   # print(user_obj)
-#   user_accounts['toshl'] = {}
-#   user_accounts['toshl']['email] = user_obj['email']
-#   user_accounts['toshl']['id] = user_obj['id']
-# else:
-#   print(r.text)
-#   auth_passed = False
+print("Checking toshl token... ")
+r = requests.get("https://api.toshl.com/me", headers=toshl_headers)
+if (r.status_code == 200):
+  print("success")
+  user_obj = json.loads(r.text)
+  # print(user_obj)
+  user_accounts['toshl'] = {}
+  user_accounts['toshl']['email'] = user_obj['email']
+  user_accounts['toshl']['id'] = user_obj['id']
+else:
+  print(r.text)
+  auth_passed = False
+
+print("Loading toshl categories and tags... ")
+get_toshl_cats_and_tags()
+print("success")
 
 
 # if not auth_passed:
@@ -171,7 +220,9 @@ while (True):
           print(expense_long_string(e))
           print("")
           print("Checking for similar expenses on Toshl")
+
           # Check toshl for similar expenses
+          r = requests.get("https://api.toshl.com/entries?type=expense", headers=toshl_headers)
           print("   No similar expenses found")
           
           print("")
@@ -218,4 +269,3 @@ while (True):
 
   input("Press Enter to continue...")
   
-    
