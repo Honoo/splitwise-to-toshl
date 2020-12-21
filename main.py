@@ -99,11 +99,20 @@ def get_friend_expenses(friend_id, count, page):
       # pp.pprint(expense)
   return involved_expenses_arr
 
-def expense_short_string(expense_object):
-    return f"{e['date']} {e['share_amount']} {e['currency']}\t[{e['category']}] - {e['description']}"
+def splitwise_expense_short_string(e):
+  return f"{e['date']} {e['share_amount']} {e['currency']}\t[{e['category']}] - {e['description']}"
 
-def expense_long_string(expense_object):
-    return f"{e['date']}\n{e['share_amount']} {e['currency']} (total: {e['total_amount']} {e['currency']})\n[{e['category']}]\n{e['description']}"
+def splitwise_expense_long_string(e):
+  return f"{e['date']}\n{e['share_amount']} {e['currency']} (total: {e['total_amount']} {e['currency']})\n[{e['category']}]\n{e['description']}"
+
+
+def toshl_entry_short_string(e):
+  cat_id = e['category']
+  category = toshl_category_tag[cat_id]['name']
+  description = e['desc'].replace('\n', ' ').replace('\r', '')
+  if len(description) > 50:
+    description = f"{description[0:50]} ..."
+  return f"{e['date']} {abs(e['amount'])} {e['currency']['code']} [{category}] - {description}"
 
 
 auth_passed = True
@@ -201,7 +210,7 @@ while (True):
       else:
         print("Here is what we found:")
         for e in expenses:
-          print("   " + expense_short_string(e))
+          print("   " + splitwise_expense_short_string(e))
 
       print("")
       print("Choose an option")
@@ -217,13 +226,30 @@ while (True):
           print(f"Friend Transfer > {full_name} > Page {page} > Item {expense_ind} of {len(expenses)}") 
           print(f"==========================================") 
           print("")
-          print(expense_long_string(e))
+          print(splitwise_expense_long_string(e))
           print("")
-          print("Checking for similar expenses on Toshl")
 
+          dates = get_date_buffer(e['date'])
+          print(f"Checking for similar expenses on Toshl from {dates[0]} to {dates[1]}")
           # Check toshl for similar expenses
-          r = requests.get("https://api.toshl.com/entries?type=expense", headers=toshl_headers)
-          print("   No similar expenses found")
+          r = requests.get(f"https://api.toshl.com/entries?type=expense&from={dates[0]}&to={dates[1]}", headers=toshl_headers)
+          toshl_entries = json.loads(r.text)
+          similar_entries = []
+          for te in toshl_entries:
+            # If it has roughly the same price
+            # If it has the same description
+            similar_price = abs(abs(abs(te['amount']) - abs(float(e['share_amount'])) / abs(te['amount']))) < 0.2
+            toshl_description = te['desc'].replace('\n', ' ').replace('\r', '').replace(' ', '')
+            spliwise_description = e['description'].replace('\n', ' ').replace('\r', '').replace(' ', '')
+            similar_description = toshl_description == spliwise_description
+            if similar_price or similar_description:
+              similar_entries.append(te)
+          if len(similar_entries) == 0:
+            print("   No similar expenses found")
+          else:
+            print(f"   Found {len(similar_entries)} similar expenses:")
+            for se in similar_entries:
+              print(f'    - {toshl_entry_short_string(se)}')
           
           print("")
           # Give options to add, or skip
