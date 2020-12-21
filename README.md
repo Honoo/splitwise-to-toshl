@@ -38,3 +38,8 @@ Main Menu
   - Exit
 
 ```
+
+## Future Improvements
+- Add group support
+- Refactor code so it's not all one huge file
+- Preload all toshl expenses so we don't keep loading per expense
