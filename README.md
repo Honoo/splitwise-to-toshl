@@ -13,3 +13,28 @@ Run this command after you have set up the config files.
 python main.py
 ```
 
+To use the program, key in the number or letter in the `[]` brackets and press Enter.
+
+All other necessary instructions should be in the program itself.
+
+This is roughly how the program works.
+
+```
+Main Menu
+  - Add expenses from friends List
+    - Choose a Friend
+      - Choose a page of expenses
+        - Add expense
+          - Choose a category
+          - Choose a tag
+          - Expense added, go to next expense
+  - Add expenses from groups list (not implemented)
+    - Choose a Group
+      - Choose a page of expenses
+        - Add expense
+          - Choose a category
+          - Choose a tag
+          - Expense added, go to next expense
+  - Exit
+
+```
