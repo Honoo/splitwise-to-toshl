@@ -6,7 +6,10 @@ You need to have python 3 installed
 
 ## Usage
 
-This also only runs on your personal accounts. You need to get the API keys from both these services and input them into your config file. There is an example config file provided.
+This also only runs on your personal accounts. You need to get the API keys from both these services and input them into your `config.cfg` file. There is an example config file provided.
+
+To get the splitwise API key, go [here](https://secure.splitwise.com/apps):
+To get the toshl API key, go [here](https://developer.toshl.com/):
 
 Run this command after you have set up the config files.
 ```sh

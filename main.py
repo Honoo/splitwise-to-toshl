@@ -216,7 +216,7 @@ def get_category(breadcrumb, expense):
     print("Adding expense:")
     print(splitwise_expense_long_string(expense))
     print("")
-    print(f"Choose your category (showing {offset+1} to {offset+page_size+1}")
+    print(f"Choose your category (showing {offset+1} to {offset+page_size+1})")
     
     ind = 0
     toshl_categories_slice = toshl_categories[offset:offset+page_size]
