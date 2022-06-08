@@ -32,7 +32,7 @@ toshl_categories = [] # Contains categories sorted by usage
 toshl_tags = [] # Contains tags sorted by usage
 
 def get_toshl_cats_and_tags():
-  r = requests.get("https://api.toshl.com/categories", headers=toshl_headers)
+  r = requests.get("https://api.toshl.com/categories?per_page=500", headers=toshl_headers)
   cat_response = json.loads(r.text)
   # Sort by number of entries per category
   cat_response = sorted(cat_response, key=lambda x:-x['counts']['entries'] )
@@ -47,7 +47,7 @@ def get_toshl_cats_and_tags():
       toshl_categories.append(cat)
       toshl_category_tag[c['id']] = cat
 
-  r = requests.get("https://api.toshl.com/tags", headers=toshl_headers)
+  r = requests.get("https://api.toshl.com/tags?per_page=500", headers=toshl_headers)
   tag_response = json.loads(r.text)
   # Sort by number of entries per category
   tag_response = sorted(tag_response, key=lambda x:-x['counts']['entries'] )
