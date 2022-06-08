@@ -327,7 +327,10 @@ def add_expense(breadcrumb, expense):
     "currency": { "code": e['currency'] },
     "date": e['date'],
     "desc": e['description'],
-    "category": selected_category['id']
+    "category": selected_category['id'],
+    "extra": {
+      "friends": e['friends']
+    }
   }
   if selected_tag is not None:
     data['tags'] = [selected_tag['id']]
@@ -365,9 +368,15 @@ def get_friend_expenses(friend_id, count, page):
       "currency" : e['currency_code'],
       "total_amount" : float(e['cost']),
       "date" : e['date'].split('T')[0] ,
-      "share_amount" : 0
+      "share_amount" : 0,
+      "friends" : []
     }
+    
     expense_users = e['users']
+    for eu in expense_users:
+      if (eu['user']['id'] != user_accounts["splitwise"]["id"]):
+        full_name = ' '.join(filter(None, (eu['user']['first_name'], eu['user']['last_name'])))
+        expense['friends'].append(full_name)
     for eu in expense_users:
       if eu['user_id'] == user_accounts['splitwise']['id']:
         expense['share_amount'] = float(eu['owed_share'])
