@@ -24,8 +24,11 @@ def clear():
     _ = system('clear')
 
 
+treat_category_id = '866019'
+rachel_tag_id = '66472251'
+
 def get_toshl_cats_and_tags():
-  r = requests.get("https://api.toshl.com/categories", headers=toshl_headers)
+  r = requests.get("https://api.toshl.com/categories?per_page=500", headers=toshl_headers)
   cat_response = json.loads(r.text)
   # Sort by number of entries per category
   cat_response = sorted(cat_response, key=lambda x:-x['counts']['entries'] )
@@ -41,7 +44,7 @@ def get_toshl_cats_and_tags():
       toshl_categories.append(cat)
       toshl_category_tag[c['id']] = cat
 
-  r = requests.get("https://api.toshl.com/tags", headers=toshl_headers)
+  r = requests.get("https://api.toshl.com/tags?per_page=500", headers=toshl_headers)
   tag_response = json.loads(r.text)
   # Sort by number of entries per category
   tag_response = sorted(tag_response, key=lambda x:-x['counts']['entries'] )
@@ -57,7 +60,7 @@ def get_toshl_cats_and_tags():
       if tag['category'] in toshl_category_tag:
         toshl_category_tag[tag['category']]['tags'].append(tag)
 
-def split_50_50(entry):
+def split_expense(entry):
   e = entry
   truncated_desc = e['desc'].replace("\n", ' ')[0:30]
   print("Processing entry:")
@@ -68,9 +71,6 @@ def split_50_50(entry):
   # Split the entry into two parts
   split_amount_30 = -round(abs(e['amount']) * 100 * 0.3) / 100
   split_amount_70 = -round((abs(e['amount']) + split_amount_30) * 100) / 100
-
-  treat_category_id = '866019'
-  rachel_tag_id = '66472251'
 
   e['tags']
 
@@ -104,12 +104,11 @@ def split_50_50(entry):
 
   print("Creating split with these two entries:")
 
-  pp.pprint(data)
-
-  pp.pprint(data2)
-  if (input("Enter y to continue") != "y"):
-    input("Cancelled. Press enter to continue")
-    return
+  # pp.pprint(data)
+  # pp.pprint(data2)
+  # if (input("Enter y to continue") != "y"):
+  #   input("Cancelled. Press enter to continue")
+  #   return
 
   r = requests.post(f"https://api.toshl.com/entries?immediate_update=true", data=json.dumps(data), headers=toshl_headers)
   if r.status_code == 201:
@@ -174,7 +173,7 @@ while(True):
   print("Processing entries: " + str(page*10 + 1) + " to " + str((page+1)*10 + 1))
 
 
-  r = requests.get(f"https://api.toshl.com/entries?type=expense&from={from_date}&to={to_date}&page={page}&per_page=20", headers=toshl_headers)
+  r = requests.get(f"https://api.toshl.com/entries?type=expense&from={from_date}&to={to_date}&page={page}&per_page=20&!tags={rachel_tag_id}", headers=toshl_headers)
   # pp.pprint(r.text)
   toshl_entries = json.loads(r.text)
 
@@ -201,8 +200,9 @@ while(True):
       # Check if key extra exists
       if 'extra' in e:
         friends = e['extra']['friends']
-      print(f"[{iter}]\t{e['date']} \t ${abs(e['amount'])}\t {truncated_desc} \t {friends}")
-      print(f"\tCat: {toshl_category_hash[e['category']]}\t   Tags: {','.join(tag_list)}")
+      if ('category' in e):
+        print(f"[{iter}]\t{e['date']} \t ${abs(e['amount'])}\t {truncated_desc} \t {friends}")
+        print(f"\tCat: {toshl_category_hash[e['category']]}\t   Tags: {','.join(tag_list)}")
       iter += 1
 
 
@@ -232,7 +232,7 @@ while(True):
     if input_integer > 0 and input_integer <= len(toshl_entries):
       print("Processing entry: " + str(input_integer))
       entry = toshl_entries[input_integer-1]
-      split_50_50(entry)
+      split_expense(entry)
     else:
       print("Invalid input")
       input("Press enter to continue...")
