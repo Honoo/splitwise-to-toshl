@@ -14,6 +14,11 @@ def get_date_buffer(date_str):
   lower = lower_date.strftime("%Y-%m-%d")
   return [lower, upper]
 
+def utc_to_local(utc_tiimestamp):
+  utc_tiimestamp = datetime.fromisoformat(utc_tiimestamp.replace('Z', '+00:00'))
+  local_timestamp = utc_tiimestamp.astimezone(None).isoformat(timespec='seconds')
+  return local_timestamp.split('T')[0]
+
 def clear():
   if name == 'nt':
     _ = system('cls')

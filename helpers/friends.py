@@ -134,12 +134,13 @@ def get_friend_expenses(friend_id, count, page):
   involved_expenses_arr = []
   expenses_arr = json.loads(r.text)['expenses']
   for e in expenses_arr:
+    date_in_local_tz = utc_to_local(e['date'])
     expense = {
       "category": e['category']['name'],
       "description": e['description'],
       "currency" : e['currency_code'],
       "total_amount" : float(e['cost']),
-      "date" : e['date'].split('T')[0] ,
+      "date" : date_in_local_tz ,
       "share_amount" : 0,
       "friends" : []
     }
