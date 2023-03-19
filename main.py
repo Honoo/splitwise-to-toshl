@@ -6,6 +6,7 @@ from helpers.globals import *
 from helpers.common import *
 from helpers.category import *
 from helpers.friends import *
+from helpers.groups import *
 
 # print(auth_dict)
 pp = pprint.PrettyPrinter(indent=2)
@@ -67,10 +68,13 @@ while (True):
   print("")
   print("What would you like to do now?")
   print("[1] Transfer from Friends List")
+  print("[2] Transfer from Groups List")
   print("[0] Quit")
   i = input()
   if (i == '1'):
     friend_transfer_page()
+  elif (i == '2'):
+    group_transfer_page()
   elif (i == '0'):
     exit()
   else:
