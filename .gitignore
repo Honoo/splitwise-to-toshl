@@ -1,2 +1,5 @@
 config.json
 config.cfg
+*.csv
+
+.DS_Store
