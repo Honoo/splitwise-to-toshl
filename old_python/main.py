@@ -297,27 +297,31 @@ def get_category(breadcrumb, expense):
     print(f"[b] Back to friend's expenses")
 
     while (True):  # collect user input
-      i = input()
-      if i == ">":
-        offset += page_size
-        if offset > len(toshl_categories) - page_size:
-          offset = max(0, len(toshl_categories) - page_size)
-        break  # Break out of input loop
-      elif i == "<":
-        offset -= page_size
-        if offset < 0:
-          offset = 0
-        break  # Break out of input loop
-      elif i == 'b':
-        bail = True
-        break  # Break out of input loop
-      elif int(i) < 0 or int(i) >= len(toshl_categories_slice):
+      try:
+        i = input()
+        if i == ">":
+          offset += page_size
+          if offset > len(toshl_categories) - page_size:
+            offset = max(0, len(toshl_categories) - page_size)
+          break  # Break out of input loop
+        elif i == "<":
+          offset -= page_size
+          if offset < 0:
+            offset = 0
+          break  # Break out of input loop
+        elif i == 'b':
+          bail = True
+          break  # Break out of input loop
+        elif int(i) < 0 or int(i) >= len(toshl_categories_slice):
+          print('Invalid input!')
+          input("Press Enter to try again")
+        else:
+          selected_category = toshl_categories_slice[int(i)]
+          finish = True
+          break  # Break out of input loop
+      except ValueError:
         print('Invalid input!')
         input("Press Enter to try again")
-      else:
-        selected_category = toshl_categories_slice[int(i)]
-        finish = True
-        break  # Break out of input loop
 
     if bail or finish:
       break  # Break out of category page loop
@@ -353,30 +357,34 @@ def get_tag(breadcrumb, expense, selected_category):
     print(f"[b] Back to friend's expenses")
 
     while (True):  # Collect user input
-      i = input()
-      if i == ">":
-        offset += page_size
-        if offset > len(selected_category_tags) - page_size:
-          offset = max(0, len(selected_category_tags) - page_size)
-        break  # Break out of input loop
-      elif i == "<":
-        offset -= page_size
-        if offset < 0:
-          offset = 0
-        break  # Break out of input loop
-      elif i == 'n':
-        finish = True
-        break  # Break out of input loop
-      elif i == 'b':
-        bail = True
-        break  # Break out of input loop
-      elif int(i) < 0 or int(i) >= len(category_tags_slice):
+      try:
+        i = input()
+        if i == ">":
+          offset += page_size
+          if offset > len(selected_category_tags) - page_size:
+            offset = max(0, len(selected_category_tags) - page_size)
+          break  # Break out of input loop
+        elif i == "<":
+          offset -= page_size
+          if offset < 0:
+            offset = 0
+          break  # Break out of input loop
+        elif i == 'n':
+          finish = True
+          break  # Break out of input loop
+        elif i == 'b':
+          bail = True
+          break  # Break out of input loop
+        elif int(i) < 0 or int(i) >= len(category_tags_slice):
+          print('Invalid input!')
+          input("Press Enter to try again")
+        else:
+          selected_tag = category_tags_slice[int(i)]
+          finish = True
+          break  # Break out of input loop
+      except ValueError:
         print('Invalid input!')
         input("Press Enter to try again")
-      else:
-        selected_tag = category_tags_slice[int(i)]
-        finish = True
-        break  # Break out of input loop
     if bail or finish:
       break  # Break out of category page loop
   return bail, selected_tag
@@ -405,7 +413,7 @@ def add_expense(breadcrumb, expense):
     }
   }
   if selected_tag is not None:
-    data['tags'] = [selected_tag['id']]
+    data['tags'] = [selected_tag['id'], 76926089] # 76926089 is the "splitwise" tag
   r = requests.post(f"https://api.toshl.com/entries",
             data=json.dumps(data), headers=toshl_headers)
   if r.status_code == 201:
