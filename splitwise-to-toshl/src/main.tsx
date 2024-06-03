@@ -12,6 +12,7 @@ import { ThemeProvider } from "@emotion/react";
 import { createTheme } from "@mui/material";
 import { Copyright } from "./Copyright.tsx";
 import { Settings } from "./Settings.tsx";
+import { Friends } from "./Friends.tsx";
 
 const router = createBrowserRouter([
   {
@@ -21,6 +22,10 @@ const router = createBrowserRouter([
   {
     path: "/settings",
     element: <Settings />,
+  },
+  {
+    path: "/friends",
+    element: <Friends />,
   },
   {
     path: "*",

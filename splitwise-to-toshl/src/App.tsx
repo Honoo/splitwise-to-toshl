@@ -3,7 +3,7 @@ import "./App.css";
 import Typography from "@mui/material/Typography";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Container } from "@mui/material";
+import { Box, Button, Container } from "@mui/material";
 
 function App() {
   const splitwiseAPIKey = localStorage.getItem("splitwiseAPIKey");
@@ -50,10 +50,22 @@ function App() {
         </Typography>
       </Box>
       <Typography variant="h5" component="h2" gutterBottom>
-        {"Pin a footer to the bottom of the viewport."}
-        {"The footer will move as the main element of the page grows."}
+        This is a tool to transfer your Splitwise transactions to Toshl.
       </Typography>
-      <Typography variant="body1">Sticky footer placeholder.</Typography>
+      <Typography variant="h5" component="h2" gutterBottom>
+        All data is processed client-side and not stored on any server.
+      </Typography>
+      <Typography variant="body1" component="p" gutterBottom>
+        I can't even afford to steal your data if I wanted to.
+      </Typography>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => {
+          navigate("/friends");
+        }}>
+        Start
+      </Button>
     </Container>
   );
 }
