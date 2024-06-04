@@ -14,6 +14,7 @@ import { Copyright } from "./Copyright.tsx";
 import { Settings } from "./Settings.tsx";
 import { Friends } from "./Friends.tsx";
 import { Friend } from "./Friend.tsx";
+import { UserAccountsProvider } from "./hooks/useAccounts.tsx";
 
 const router = createBrowserRouter([
   {
@@ -43,35 +44,39 @@ const defaultTheme = createTheme();
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ThemeProvider theme={defaultTheme}>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          minHeight: "100vh",
-        }}>
-        <CssBaseline />
-
-        <RouterProvider router={router} />
-
+      <UserAccountsProvider>
         <Box
-          component="footer"
           sx={{
-            py: 3,
-            px: 2,
-            mt: "auto",
-            backgroundColor: (theme) =>
-              theme.palette.mode === "light"
-                ? theme.palette.grey[200]
-                : theme.palette.grey[800],
-          }}>
-          <Container maxWidth="sm">
-            <Typography variant="body1">
-              Welcome to Splitwise to Toshl
-            </Typography>
-            <Copyright />
-          </Container>
+            display: "flex",
+            flexDirection: "column",
+            minHeight: "100vh",
+          }}
+        >
+          <CssBaseline />
+
+          <RouterProvider router={router} />
+
+          <Box
+            component="footer"
+            sx={{
+              py: 3,
+              px: 2,
+              mt: "auto",
+              backgroundColor: (theme) =>
+                theme.palette.mode === "light"
+                  ? theme.palette.grey[200]
+                  : theme.palette.grey[800],
+            }}
+          >
+            <Container maxWidth="sm">
+              <Typography variant="body1">
+                Welcome to Splitwise to Toshl
+              </Typography>
+              <Copyright />
+            </Container>
+          </Box>
         </Box>
-      </Box>
+      </UserAccountsProvider>
     </ThemeProvider>
   </React.StrictMode>
 );

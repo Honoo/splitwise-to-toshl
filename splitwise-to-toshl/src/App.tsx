@@ -4,18 +4,26 @@ import Typography from "@mui/material/Typography";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Button, Container } from "@mui/material";
+import { useUserAccounts } from "./hooks/useAccounts";
 
 function App() {
   const splitwiseAPIKey = localStorage.getItem("splitwiseAPIKey");
   const toshlAPIKey = localStorage.getItem("toshlAPIKey");
 
   const navigate = useNavigate();
+  const { userAccounts, loadUserAccounts, accountsSet } = useUserAccounts();
 
   useEffect(() => {
-    if (!splitwiseAPIKey || !toshlAPIKey) {
-      navigate("/settings");
+    // if (!splitwiseAPIKey || !toshlAPIKey) {
+    //   navigate("/settings");
+    // }
+    if (!accountsSet) {
+      console.log("Accounts not set");
+      loadUserAccounts();
+    } else {
+      console.log("Accounts set");
     }
-  }, [navigate, splitwiseAPIKey, toshlAPIKey]);
+  }, [accountsSet, loadUserAccounts, navigate, splitwiseAPIKey, toshlAPIKey]);
 
   const last5Characters = (str: string | null) => {
     if (!str) {
@@ -30,42 +38,64 @@ function App() {
         Splitwise to Toshl
       </Typography>
 
-      <Box
-        sx={{
-          position: "absolute",
-          top: "10px",
-          right: "10px",
-        }}>
-        <Typography
-          variant="body1"
-          component="p"
+      {accountsSet && (
+        <Box
           sx={{
-            textAlign: "right",
+            position: "absolute",
+            top: "10px",
+            right: "10px",
           }}
-          gutterBottom>
-          <div>API Keys:</div>
-          <div>Splitwise: {last5Characters(splitwiseAPIKey)}</div>
-          <div>Toshl: {last5Characters(toshlAPIKey)}</div>
-          <a href="/settings">Settings</a>
-        </Typography>
-      </Box>
-      <Typography variant="h5" component="h2" gutterBottom>
+        >
+          <Typography
+            variant="body1"
+            component="p"
+            sx={{
+              textAlign: "right",
+            }}
+            gutterBottom
+          >
+            <div>API Keys:</div>
+            <div>Splitwise: {last5Characters(splitwiseAPIKey)}</div>
+            <div>Toshl: {last5Characters(toshlAPIKey)}</div>
+            <a href="/settings">Settings</a>
+          </Typography>
+        </Box>
+      )}
+
+      <Typography variant="h6" component="h2" gutterBottom>
         This is a tool to transfer your Splitwise transactions to Toshl.
       </Typography>
-      <Typography variant="h5" component="h2" gutterBottom>
-        All data is processed client-side and not stored on any server.
+      <Typography variant="h6" component="h2" gutterBottom>
+        All processing is done on your machine.
+      </Typography>
+      <Typography variant="h6" component="h2" gutterBottom>
+        No data is stored on the server.
       </Typography>
       <Typography variant="body1" component="p" gutterBottom>
-        I can't even afford to steal your data if I wanted to.
+        This tool is open source. You can view the code{" "}
       </Typography>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => {
-          navigate("/friends");
-        }}>
-        Start
-      </Button>
+
+      {accountsSet ? (
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => {
+            navigate("/friends");
+          }}
+        >
+          Start
+        </Button>
+      ) : (
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => {
+            navigate("/settings");
+          }}
+        >
+          Set API Keys
+        </Button>
+      )}
     </Container>
   );
 }

@@ -9,3 +9,23 @@ Originally this was a command line application, but since python 3.12, something
 Vite + React + TypeScript + TailwindCSS
 
 Requires Node 20.0.0 or higher.
+
+# Development
+
+Install dependencies
+
+```
+yarn
+```
+
+Run the frontend in one terminal
+
+```
+yarn dev
+```
+
+Run the server in another terminal
+
+```
+yarn dev:server
+```

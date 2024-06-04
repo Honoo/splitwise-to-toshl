@@ -56,6 +56,13 @@ export function Settings() {
           {saved ? "Done" : "Save"}
         </Button>
       </Box>
+      <Typography variant="body2" component="h2" gutterBottom>
+        These keys are stored on your local machine, and are not sent to the
+        server.
+      </Typography>
+      <Typography variant="body2" component="h2" gutterBottom>
+        If you clear your cache these will be deleted{" "}
+      </Typography>
     </Container>
   );
 }
