@@ -4,28 +4,6 @@ This is a webapp that will take your expenses in splitwise and automatically inp
 
 Originally this was a command line application, but since python 3.12, something broke and I decided to rewrite it in a more modern way.
 
-# Stack
+This is an outdated version of the app, the updated link is here:
 
-Vite + React + TypeScript + TailwindCSS
-
-Requires Node 20.0.0 or higher.
-
-# Development
-
-Install dependencies
-
-```
-yarn
-```
-
-Run the frontend in one terminal
-
-```
-yarn dev
-```
-
-Run the server in another terminal
-
-```
-yarn dev:server
-```
+https://github.com/cjx3711/splitwise-to-toshl
