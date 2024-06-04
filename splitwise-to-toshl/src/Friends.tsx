@@ -1,7 +1,8 @@
 import { Box, Button, Container, styled, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-type SplitwiseFriend = {
+export type SplitwiseFriend = {
   id: string;
   first_name: string;
   last_name: string;
@@ -22,7 +23,7 @@ const FriendRow = styled(Box)`
 `;
 export function Friends() {
   const [friends, setFriends] = useState<SplitwiseFriend[]>([]);
-
+  const navigate = useNavigate();
   useEffect(() => {
     fetch("/api/splitwise/v3.0/get_friends", {
       method: "GET",
@@ -77,7 +78,9 @@ export function Friends() {
               variant="contained"
               color="primary"
               size="small"
-              onClick={() => {}}>
+              onClick={() => {
+                navigate(`/friend/${friend.id}`);
+              }}>
               Next
             </Button>
           </FriendRow>
