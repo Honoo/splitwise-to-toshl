@@ -1,6 +1,16 @@
 import { Box, Button, Container, styled, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 
+type SplitwiseFriend = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  balance: {
+    amount: number;
+    currency_code: string;
+  }[];
+};
+
 const FriendRow = styled(Box)`
   padding: 0.5rem;
   display: flex;
@@ -11,39 +21,27 @@ const FriendRow = styled(Box)`
   border: 1px solid #888;
 `;
 export function Friends() {
-  const [friends, setFriends] = useState<unknown>([]);
+  const [friends, setFriends] = useState<SplitwiseFriend[]>([]);
 
   useEffect(() => {
-    // fetch("https://secure.splitwise.com/api/v3.0/get_friends", {
-    //   method: "GET",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //     Authorization: `Bearer ${localStorage.getItem("splitwiseAPIKey")}`,
-    //   },
-    //   mode: "no-cors",
-    // })
-    //   .then((res) => res.json())
-    //   .then((data) => {
-    //     setFriends(data.friends);
-    //   });
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
-    myHeaders.append(
-      "Authorization",
-      "Bearer 1mgKsM1IJCQHuG1GozbS9kvTDfIDVw5rMCPO6SW5"
-    );
-
-    const requestOptions = {
+    fetch("/api/splitwise/v3.0/get_friends", {
       method: "GET",
-      headers: myHeaders,
-      redirect: "follow",
-      mode: "no-cors",
-    };
-
-    fetch("https://secure.splitwise.com/api/v3.0/get_friends", requestOptions)
-      .then((response) => response.text())
-      .then((result) => console.log(result))
-      .catch((error) => console.error(error));
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("splitwiseAPIKey")}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const friends = data.friends as SplitwiseFriend[];
+        // sort by balance
+        friends.sort((a, b) => {
+          const aBalance = a.balance[0]?.amount || 0;
+          const bBalance = b.balance[0]?.amount || 0;
+          return bBalance - aBalance;
+        });
+        setFriends(friends);
+      });
   }, []);
 
   return (
@@ -58,7 +56,22 @@ export function Friends() {
         {friends.map((friend) => (
           <FriendRow key={friend.id}>
             <Typography variant="body1" component="p">
-              {friend.first_name}
+              {[friend.first_name, friend.last_name].filter(Boolean).join(", ")}
+              {friend.balance[0]?.amount && friend.balance[0]?.amount > 0 && (
+                <span
+                  style={{
+                    color: "grey",
+                    marginLeft: "0.5rem",
+                  }}>
+                  (
+                  {friend.balance
+                    .map(
+                      (balance) => `${balance.amount} ${balance.currency_code}`
+                    )
+                    .join(", ")}
+                  )
+                </span>
+              )}
             </Typography>
             <Button
               variant="contained"
